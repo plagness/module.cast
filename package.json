@@ -1,0 +1,41 @@
+{
+  "name": "module.cast",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "i18n:extract": "lingui extract",
+    "i18n:compile": "lingui compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plagness/module.cast.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/plagness/module.cast/issues"
+  },
+  "homepage": "https://github.com/plagness/module.cast#readme",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.2",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~5.9",
+    "vite": "^8.0.3"
+  }
+}
