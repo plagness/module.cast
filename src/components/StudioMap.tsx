@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react'
-import { YMaps, Map, Placemark, Polyline } from '@pbe/react-yandex-maps'
+import { useState, useRef, useCallback } from 'react'
+import { YMaps, Map, Placemark } from '@pbe/react-yandex-maps'
 import { useI18n } from '../i18n'
-import { Footprints, TrainFront, Car, Bus } from 'lucide-react'
+import { Footprints, Bus, Car } from 'lucide-react'
 
 const API_KEY = import.meta.env.VITE_YANDEX_MAPS_KEY || ''
 const STUDIO: [number, number] = [55.720307, 37.434262]
 
-type TransportMode = 'walk' | 'transit' | 'car'
-type ViewMode = 'all' | TransportMode | number // number = station index
+type TransportMode = 'pedestrian' | 'masstransit' | 'auto'
 
 interface Station {
   name: string
-  nameEn: string
   coords: [number, number]
   color: string
   type: 'metro' | 'mcd'
@@ -19,11 +17,11 @@ interface Station {
 }
 
 const STATIONS: Station[] = [
-  { name: 'Рабочий Посёлок', nameEn: 'Rabochiy Poselok', coords: [55.7145, 37.4735], color: '#EF7E24', type: 'mcd', lines: 'МЦД-1' },
-  { name: 'Сетунь', nameEn: 'Setun', coords: [55.7178, 37.4520], color: '#EF7E24', type: 'mcd', lines: 'МЦД-1' },
-  { name: 'Кунцевская', nameEn: 'Kuntsevskaya', coords: [55.7306, 37.4461], color: '#0072BA', type: 'metro', lines: '3, 4, БКЛ' },
-  { name: 'Славянский бульвар', nameEn: 'Slavyansky Blvd', coords: [55.7297, 37.4714], color: '#0072BA', type: 'metro', lines: '3' },
-  { name: 'Молодёжная', nameEn: 'Molodezhnaya', coords: [55.7408, 37.4167], color: '#0072BA', type: 'metro', lines: '3' },
+  { name: 'Рабочий Посёлок', coords: [55.7145, 37.4735], color: '#EF7E24', type: 'mcd', lines: 'D1' },
+  { name: 'Сетунь', coords: [55.7178, 37.4520], color: '#EF7E24', type: 'mcd', lines: 'D1' },
+  { name: 'Кунцевская', coords: [55.7306, 37.4461], color: '#0072BA', type: 'metro', lines: '3, 4, БКЛ' },
+  { name: 'Славянский бульвар', coords: [55.7297, 37.4714], color: '#0072BA', type: 'metro', lines: '3' },
+  { name: 'Молодёжная', coords: [55.7408, 37.4167], color: '#0072BA', type: 'metro', lines: '3' },
 ]
 
 const PARKING: [number, number][] = [
@@ -31,145 +29,172 @@ const PARKING: [number, number][] = [
   [55.7215, 37.4380],
 ]
 
-const ROUTE_COLORS = ['#F97316', '#FB923C', '#0072BA', '#3B82F6', '#8B5CF6']
+const MODE_LABELS: Record<TransportMode, { ru: string; en: string; icon: typeof Footprints }> = {
+  pedestrian: { ru: 'Пешком', en: 'Walk', icon: Footprints },
+  masstransit: { ru: 'Транспорт', en: 'Transit', icon: Bus },
+  auto: { ru: 'На машине', en: 'By car', icon: Car },
+}
 
-interface RouteInfo {
-  stationIdx: number
-  duration: number
-  distance: number
-  path: [number, number][]
-  mode: TransportMode
+function stationLabel(s: Station) {
+  return `${s.type === 'mcd' ? 'Д' : 'М'}. ${s.name}`
+}
+
+function svgIcon(size: number, inner: string) {
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${inner}</svg>`
+  )
 }
 
 export default function StudioMap() {
   const { t } = useI18n()
-  const [routes, setRoutes] = useState<RouteInfo[]>([])
-  const [view, setView] = useState<ViewMode>('all')
-  const [carRoute, setCarRoute] = useState<RouteInfo | null>(null)
-  const [transitRoutes, setTransitRoutes] = useState<RouteInfo[]>([])
+  const isRu = t('home.walk.min') !== 'min walk'
 
-  // Fetch walking routes via OSRM (reliable, no ymaps dependency issues)
-  useEffect(() => {
-    STATIONS.forEach(async (station, idx) => {
-      try {
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/foot/${station.coords[1]},${station.coords[0]};${STUDIO[1]},${STUDIO[0]}?overview=full&geometries=geojson`
-        )
-        const data = await res.json()
-        if (data.routes?.[0]) {
-          const r = data.routes[0]
-          const path = r.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
-          setRoutes(prev => {
-            if (prev.some(pr => pr.stationIdx === idx && pr.mode === 'walk')) return prev
-            return [...prev, {
-              stationIdx: idx, duration: Math.round(r.duration / 60),
-              distance: Math.round(r.distance), path, mode: 'walk' as const,
-            }].sort((a, b) => a.duration - b.duration)
-          })
-        }
-      } catch { /* skip */ }
-    })
-  }, [])
+  const [mode, setMode] = useState<TransportMode>('pedestrian')
+  const [activeStation, setActiveStation] = useState(0) // index in STATIONS
+  const [duration, setDuration] = useState<number | null>(null)
+  const [distance, setDistance] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // Fetch car route from center (МКАД direction)
-  useEffect(() => {
-    async function fetchCar() {
-      try {
-        const from: [number, number] = [55.7558, 37.6173] // центр Москвы
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${STUDIO[1]},${STUDIO[0]}?overview=full&geometries=geojson`
-        )
-        const data = await res.json()
-        if (data.routes?.[0]) {
-          const r = data.routes[0]
-          const path = r.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
-          setCarRoute({
-            stationIdx: -1, duration: Math.round(r.duration / 60),
-            distance: Math.round(r.distance), path, mode: 'car' as const,
-          })
-        }
-      } catch { /* skip */ }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ymapsRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const routeRef = useRef<any>(null)
+
+  const updateRoute = useCallback((stationIdx: number, routingMode: TransportMode) => {
+    const map = mapRef.current
+    const ym = ymapsRef.current
+    if (!map || !ym) return
+
+    // Remove old route
+    if (routeRef.current) {
+      map.geoObjects.remove(routeRef.current)
+      routeRef.current = null
     }
-    fetchCar()
-  }, [])
 
-  // Fetch transit routes (bus/tram) — use OSRM driving as approximation for bus
-  useEffect(() => {
-    const busStations = STATIONS.slice(0, 3) // closest 3
-    busStations.forEach(async (station, idx) => {
+    setLoading(true)
+    setDuration(null)
+    setDistance(null)
+
+    const station = STATIONS[stationIdx]
+    const multiRoute = new ym.multiRouter.MultiRoute(
+      {
+        referencePoints: [station.coords, STUDIO],
+        params: { routingMode },
+      },
+      {
+        boundsAutoApply: true,
+        routeActiveStrokeWidth: 5,
+        routeActiveStrokeColor: station.color,
+      }
+    )
+
+    multiRoute.model.events.add('requestsuccess', () => {
       try {
-        const res = await fetch(
-          `https://router.project-osrm.org/route/v1/driving/${station.coords[1]},${station.coords[0]};${STUDIO[1]},${STUDIO[0]}?overview=full&geometries=geojson`
-        )
-        const data = await res.json()
-        if (data.routes?.[0]) {
-          const r = data.routes[0]
-          const path = r.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng] as [number, number])
-          setTransitRoutes(prev => {
-            if (prev.some(pr => pr.stationIdx === idx)) return prev
-            return [...prev, {
-              stationIdx: idx, duration: Math.round(r.duration / 60) + 3, // +3 min waiting
-              distance: Math.round(r.distance), path, mode: 'transit' as const,
-            }].sort((a, b) => a.duration - b.duration)
-          })
+        const active = multiRoute.getActiveRoute()
+        if (active) {
+          const dur = active.properties.get('duration')
+          const dist = active.properties.get('distance')
+          setDuration(Math.round((dur?.value || 0) / 60))
+          setDistance(Math.round(dist?.value || 0))
         }
-      } catch { /* skip */ }
+      } catch {
+        // route loaded but can't read properties yet
+      }
+      setLoading(false)
     })
+
+    multiRoute.model.events.add('requestfail', () => {
+      setLoading(false)
+    })
+
+    map.geoObjects.add(multiRoute)
+    routeRef.current = multiRoute
   }, [])
 
-  // Which routes to show
-  const visibleRoutes = (() => {
-    if (view === 'all') return routes
-    if (view === 'walk') return routes
-    if (view === 'car') return carRoute ? [carRoute] : []
-    if (view === 'transit') return transitRoutes
-    if (typeof view === 'number') return routes.filter(r => r.stationIdx === view)
-    return routes
-  })()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onMapLoad = useCallback((ym: any) => {
+    ymapsRef.current = ym
+  }, [])
 
-  const showStations = view === 'all' || view === 'walk' || typeof view === 'number'
-  const showParking = view === 'all' || view === 'car'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onMapInstance = useCallback((ref: any) => {
+    if (ref && !mapRef.current) {
+      mapRef.current = ref
+      // Initial route after map + ymaps are ready
+      const tryInit = () => {
+        if (ymapsRef.current && mapRef.current) {
+          updateRoute(0, 'pedestrian')
+        } else {
+          setTimeout(tryInit, 300)
+        }
+      }
+      tryInit()
+    }
+  }, [updateRoute])
+
+  // Update route when mode or station changes
+  const selectStation = (idx: number) => {
+    setActiveStation(idx)
+    updateRoute(idx, mode)
+  }
+
+  const selectMode = (m: TransportMode) => {
+    setMode(m)
+    updateRoute(activeStation, m)
+  }
+
+  const station = STATIONS[activeStation]
 
   return (
     <div>
       {/* Mode buttons */}
-      <div className="flex flex-wrap gap-2 mb-4 justify-center">
-        <ModeBtn active={view === 'all'} onClick={() => setView('all')} icon={null} label={t('home.walk.min') === 'min walk' ? 'All' : 'Все'} />
-        <ModeBtn active={view === 'walk'} onClick={() => setView('walk')} icon={<Footprints size={16} />} label={t('home.walk.min') === 'min walk' ? 'Walk' : 'Пешком'} />
-        <ModeBtn active={view === 'transit'} onClick={() => setView('transit')} icon={<Bus size={16} />} label={t('home.walk.min') === 'min walk' ? 'Transit' : 'Транспорт'} />
-        <ModeBtn active={view === 'car'} onClick={() => setView('car')} icon={<Car size={16} />} label={t('home.walk.min') === 'min walk' ? 'By car' : 'На машине'} />
+      <div className="flex gap-2 mb-3 justify-center">
+        {(Object.keys(MODE_LABELS) as TransportMode[]).map(m => {
+          const { icon: Icon } = MODE_LABELS[m]
+          const label = isRu ? MODE_LABELS[m].ru : MODE_LABELS[m].en
+          const active = mode === m
+          return (
+            <button
+              key={m}
+              onClick={() => selectMode(m)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
+                active ? 'text-white shadow-md' : 'hover:bg-[var(--surface-hover)]'
+              }`}
+              style={active
+                ? { background: 'var(--accent)' }
+                : { color: 'var(--secondary)', border: '1px solid var(--border)' }
+              }
+            >
+              <Icon size={16} />
+              {label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Station filter chips (show when walk mode) */}
-      {(view === 'walk' || view === 'all' || typeof view === 'number') && (
-        <div className="flex flex-wrap gap-2 mb-4 justify-center">
-          {STATIONS.map((s, i) => {
-            const r = routes.find(rt => rt.stationIdx === i)
-            const isActive = view === i
-            return (
-              <button
-                key={s.name}
-                onClick={() => setView(isActive ? 'walk' : i)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border ${
-                  isActive ? 'text-white' : 'hover:bg-[var(--surface-hover)]'
-                }`}
-                style={isActive
-                  ? { background: ROUTE_COLORS[i], borderColor: ROUTE_COLORS[i] }
-                  : { borderColor: 'var(--border)', color: 'var(--secondary)' }
-                }
-              >
-                <TrainFront size={12} />
-                {s.type === 'mcd' ? 'Д' : 'М'} {s.name}
-                {r && r.duration > 0 && (
-                  <span className={isActive ? 'opacity-80' : ''} style={isActive ? {} : { color: 'var(--accent)' }}>
-                    {r.duration}′
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-      )}
+      {/* Station chips */}
+      <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
+        {STATIONS.map((s, i) => {
+          const active = activeStation === i
+          return (
+            <button
+              key={s.name}
+              onClick={() => selectStation(i)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border ${
+                active ? 'text-white' : 'hover:bg-[var(--surface-hover)]'
+              }`}
+              style={active
+                ? { background: s.color, borderColor: s.color }
+                : { borderColor: 'var(--border)', color: 'var(--secondary)' }
+              }
+            >
+              {stationLabel(s)}
+            </button>
+          )
+        })}
+      </div>
 
       {/* Map */}
       <div className="rounded-2xl overflow-hidden border" style={{ borderColor: 'var(--border)', height: 440 }}>
@@ -177,6 +202,8 @@ export default function StudioMap() {
           <Map
             defaultState={{ center: STUDIO, zoom: 14, controls: ['zoomControl'] }}
             style={{ width: '100%', height: '100%' }}
+            onLoad={onMapLoad}
+            instanceRef={onMapInstance}
             modules={['multiRouter.MultiRoute']}
           >
             {/* Studio marker */}
@@ -184,70 +211,57 @@ export default function StudioMap() {
               geometry={STUDIO}
               options={{
                 iconLayout: 'default#imageWithContent',
-                iconImageHref: svgIcon(40, `<circle cx="20" cy="20" r="18" fill="%23F97316" stroke="white" stroke-width="3"/><text x="20" y="26" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="18" fill="white">M</text>`),
-                iconImageSize: [40, 40],
-                iconImageOffset: [-20, -20],
+                iconImageHref: svgIcon(42, `<circle cx="21" cy="21" r="19" fill="%23F97316" stroke="white" stroke-width="3"/><text x="21" y="27" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="18" fill="white">M</text>`),
+                iconImageSize: [42, 42],
+                iconImageOffset: [-21, -21],
               }}
               properties={{
                 hintContent: t('brand'),
-                balloonContentHeader: `<strong style="color:#F97316">${t('brand')}</strong>`,
-                balloonContentBody: t('home.location.sub'),
+                balloonContentHeader: `<strong style="color:#F97316;font-size:15px">${t('brand')}</strong>`,
+                balloonContentBody: `<div style="font-family:Inter,sans-serif">${t('home.location.sub')}</div>`,
               }}
             />
 
             {/* Station markers */}
-            {showStations && STATIONS.map((station, i) => {
-              if (typeof view === 'number' && view !== i) return null
-              const label = station.type === 'mcd' ? 'Д' : 'М'
-              const r = routes.find(rt => rt.stationIdx === i)
+            {STATIONS.map((s, i) => {
+              const label = s.type === 'mcd' ? 'Д' : 'М'
+              const isActive = activeStation === i
+              const sz = isActive ? 32 : 26
+              const r = sz / 2
               return (
                 <Placemark
-                  key={station.name}
-                  geometry={station.coords}
+                  key={s.name}
+                  geometry={s.coords}
                   options={{
                     iconLayout: 'default#imageWithContent',
-                    iconImageHref: svgIcon(28, `<circle cx="14" cy="14" r="12" fill="${station.color}" stroke="white" stroke-width="2"/><text x="14" y="19" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="12" fill="white">${label}</text>`),
-                    iconImageSize: [28, 28],
-                    iconImageOffset: [-14, -14],
+                    iconImageHref: svgIcon(sz,
+                      `<circle cx="${r}" cy="${r}" r="${r - 2}" fill="${s.color}" stroke="white" stroke-width="${isActive ? 3 : 2}"/>` +
+                      `<text x="${r}" y="${r + 5}" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="${isActive ? 14 : 11}" fill="white">${label}</text>`
+                    ),
+                    iconImageSize: [sz, sz],
+                    iconImageOffset: [-r, -r],
                   }}
                   properties={{
-                    hintContent: `${label} ${station.name}`,
-                    balloonContentHeader: `<strong>${label} ${station.name}</strong>`,
-                    balloonContentBody: `<div style="font-family:Inter,sans-serif">
-                      <span style="color:#888;font-size:12px">${station.lines}</span><br/>
-                      ${r && r.duration > 0 ? `<span style="color:#F97316;font-weight:600">🚶 ${r.duration} мин (${(r.distance / 1000).toFixed(1)} км)</span>` : ''}
-                    </div>`,
+                    hintContent: stationLabel(s),
+                    balloonContentHeader: `<strong style="font-size:14px">${stationLabel(s)}</strong>`,
+                    balloonContentBody: `<div style="font-family:Inter,sans-serif;color:#888;font-size:12px">${s.lines}</div>`,
                   }}
                 />
               )
             })}
 
-            {/* Route polylines */}
-            {visibleRoutes.map((r, i) => (
-              <Polyline
-                key={`route-${r.mode}-${r.stationIdx}-${i}`}
-                geometry={r.path}
-                options={{
-                  strokeColor: r.mode === 'car' ? '#10B981' : r.mode === 'transit' ? '#8B5CF6' : ROUTE_COLORS[r.stationIdx % ROUTE_COLORS.length],
-                  strokeWidth: r.mode === 'car' ? 5 : 4,
-                  strokeOpacity: typeof view === 'number' ? 0.9 : 0.6,
-                  strokeStyle: r.mode === 'car' ? 'solid' : 'shortdash',
-                }}
-              />
-            ))}
-
-            {/* Parking */}
-            {showParking && PARKING.map((coords, i) => (
+            {/* Parking — only in auto mode */}
+            {mode === 'auto' && PARKING.map((coords, i) => (
               <Placemark
-                key={`parking-${i}`}
+                key={`p-${i}`}
                 geometry={coords}
                 options={{
                   iconLayout: 'default#imageWithContent',
-                  iconImageHref: svgIcon(22, `<rect width="22" height="22" rx="5" fill="%236B7280" opacity="0.7"/><text x="11" y="16" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="13" fill="white">P</text>`),
-                  iconImageSize: [22, 22],
-                  iconImageOffset: [-11, -11],
+                  iconImageHref: svgIcon(24, `<rect width="24" height="24" rx="6" fill="%233B82F6" opacity="0.8"/><text x="12" y="17" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="14" fill="white">P</text>`),
+                  iconImageSize: [24, 24],
+                  iconImageOffset: [-12, -12],
                 }}
-                properties={{ hintContent: t('home.parking') }}
+                properties={{ hintContent: isRu ? 'Парковка' : 'Parking' }}
               />
             ))}
           </Map>
@@ -255,87 +269,37 @@ export default function StudioMap() {
       </div>
 
       {/* Info panel */}
-      <div className="mt-4">
-        {/* Walking legend */}
-        {(view === 'all' || view === 'walk' || typeof view === 'number') && routes.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {routes.filter(r => r.duration > 0 && (typeof view !== 'number' || r.stationIdx === view)).map(r => {
-              const s = STATIONS[r.stationIdx]
-              const color = ROUTE_COLORS[r.stationIdx % ROUTE_COLORS.length]
-              return (
-                <button
-                  key={s.name}
-                  onClick={() => setView(view === r.stationIdx ? 'walk' : r.stationIdx)}
-                  className="glass-card px-3 py-2.5 text-center cursor-pointer transition-all hover:scale-[1.02]"
-                  style={view === r.stationIdx ? { borderColor: color, boxShadow: `0 0 0 2px ${color}` } : {}}
-                >
-                  <div className="flex items-center justify-center gap-1.5 mb-1">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                    <span className="text-[11px] font-medium truncate">{s.type === 'mcd' ? 'Д' : 'М'} {s.name}</span>
-                  </div>
-                  <div className="font-bold text-base" style={{ color: 'var(--accent)' }}>
-                    {r.duration} <span className="text-[10px] font-normal" style={{ color: 'var(--muted)' }}>мин</span>
-                  </div>
-                  <div className="text-[10px]" style={{ color: 'var(--muted)' }}>{(r.distance / 1000).toFixed(1)} км</div>
-                </button>
-              )
-            })}
+      <div className="glass-card px-5 py-4 mt-4 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: station.color }}>
+            <span className="text-white font-bold text-sm">{station.type === 'mcd' ? 'Д' : 'М'}</span>
           </div>
-        )}
+          <div>
+            <div className="font-semibold text-sm">{stationLabel(station)}</div>
+            <div className="text-xs" style={{ color: 'var(--muted)' }}>
+              {station.lines} → {t('brand')}
+            </div>
+          </div>
+        </div>
 
-        {/* Car info */}
-        {view === 'car' && carRoute && (
-          <div className="glass-card px-6 py-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Car size={18} style={{ color: '#10B981' }} />
-              <span className="font-medium">{t('home.walk.min') === 'min walk' ? 'From city center' : 'Из центра Москвы'}</span>
-            </div>
-            <div className="font-bold text-2xl" style={{ color: '#10B981' }}>
-              ~{carRoute.duration} <span className="text-sm font-normal" style={{ color: 'var(--muted)' }}>мин</span>
-            </div>
-            <div className="text-xs mt-1" style={{ color: 'var(--muted)' }}>{(carRoute.distance / 1000).toFixed(0)} км • {t('home.parking')}</div>
-          </div>
-        )}
-
-        {/* Transit info */}
-        {view === 'transit' && transitRoutes.length > 0 && (
-          <div className="glass-card px-6 py-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Bus size={18} style={{ color: '#8B5CF6' }} />
-              <span className="font-medium">{t('home.walk.min') === 'min walk' ? 'Public transit' : 'Общественный транспорт'}</span>
-            </div>
-            <div className="text-sm" style={{ color: 'var(--secondary)' }}>
-              {t('home.walk.min') === 'min walk'
-                ? 'Bus routes: 103, 157, 198, 231, 610, 732, 779, 840'
-                : 'Автобусы: 103, 157, 198, 231, 610, 732, 779, 840'}
-            </div>
-            <div className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
-              {t('home.walk.min') === 'min walk'
-                ? 'From nearest metro stations to the studio by bus'
-                : 'От ближайших станций метро до студии на автобусе'}
-            </div>
-          </div>
-        )}
+        <div className="text-right">
+          {loading ? (
+            <div className="text-sm" style={{ color: 'var(--muted)' }}>...</div>
+          ) : duration !== null ? (
+            <>
+              <div className="font-bold text-2xl" style={{ color: 'var(--accent)' }}>
+                {duration} <span className="text-sm font-normal" style={{ color: 'var(--muted)' }}>{isRu ? 'мин' : 'min'}</span>
+              </div>
+              {distance !== null && (
+                <div className="text-xs" style={{ color: 'var(--muted)' }}>
+                  {(distance / 1000).toFixed(1)} {isRu ? 'км' : 'km'} •{' '}
+                  {isRu ? MODE_LABELS[mode].ru.toLowerCase() : MODE_LABELS[mode].en.toLowerCase()}
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   )
-}
-
-function ModeBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
-        active ? 'text-white' : 'hover:bg-[var(--surface-hover)]'
-      }`}
-      style={active ? { background: 'var(--accent)' } : { color: 'var(--secondary)', border: '1px solid var(--border)' }}
-    >
-      {icon}
-      {label}
-    </button>
-  )
-}
-
-function svgIcon(size: number, inner: string) {
-  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${inner}</svg>`)
 }
