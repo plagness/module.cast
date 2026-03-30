@@ -1,6 +1,4 @@
 /// <reference types="vite/client" />
 
-declare module '*.po' {
-  const messages: Record<string, string>
-  export { messages }
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const ymaps: any
