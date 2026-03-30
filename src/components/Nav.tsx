@@ -9,6 +9,7 @@ const navItems = [
   { path: '', key: 'nav.home' },
   { path: 'booking', key: 'nav.booking' },
   { path: 'gallery', key: 'nav.gallery' },
+  { path: 'updates', key: 'nav.updates' },
 ]
 
 export default function Nav() {

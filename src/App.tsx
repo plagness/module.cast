@@ -8,6 +8,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Gallery from './pages/Gallery'
 import Booking from './pages/Booking'
+import Updates from './pages/Updates'
 import Overlay from './pages/Overlay'
 import OverlayDisplay from './pages/OverlayDisplay'
 
@@ -39,6 +40,7 @@ function LangLayout() {
           <Route index element={<Home />} />
           <Route path="booking" element={<Booking />} />
           <Route path="gallery" element={<Gallery />} />
+          <Route path="updates" element={<Updates />} />
         </Routes>
       </main>
       <Footer />

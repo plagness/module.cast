@@ -72,5 +72,11 @@
   "gallery.meta": "Photos of module.cast studio in Moscow",
   "gallery.all": "All",
   "gallery.soon": "Photos coming soon",
-  "gallery.soon.sub": "We are preparing the studio gallery for you"
+  "gallery.soon.sub": "We are preparing the studio gallery for you",
+
+  "nav.updates": "Updates",
+  "updates.title": "Updates",
+  "updates.subtitle": "Studio news and latest events",
+  "updates.meta": "module.cast studio updates — news, videos, events",
+  "updates.soon": "Updates coming soon"
 }

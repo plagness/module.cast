@@ -72,5 +72,11 @@
   "gallery.meta": "莫斯科module.cast工作室照片",
   "gallery.all": "全部",
   "gallery.soon": "照片即将上线",
-  "gallery.soon.sub": "我们正在为您准备工作室画廊"
+  "gallery.soon.sub": "我们正在为您准备工作室画廊",
+
+  "nav.updates": "动态",
+  "updates.title": "动态",
+  "updates.subtitle": "工作室新闻和最新活动",
+  "updates.meta": "module.cast工作室动态——新闻、视频、活动",
+  "updates.soon": "动态即将上线"
 }
