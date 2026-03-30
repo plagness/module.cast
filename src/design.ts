@@ -40,18 +40,12 @@ export const fonts = {
   mono: "'JetBrains Mono', 'Fira Code', monospace",
 } as const
 
-export const SUPPORTED_LANGS = ['ru', 'en', 'be', 'tt', 'ba', 'ce', 'sah', 'zh', 'hi'] as const
+export const SUPPORTED_LANGS = ['ru', 'en', 'zh'] as const
 export type Lang = (typeof SUPPORTED_LANGS)[number]
 export const DEFAULT_LANG: Lang = 'ru'
 
 export const LANG_NAMES: Record<Lang, string> = {
   ru: 'Русский',
   en: 'English',
-  be: 'Беларуская',
-  tt: 'Татарча',
-  ba: 'Башҡортса',
-  ce: 'Нохчийн',
-  sah: 'Саха тыла',
   zh: '中文',
-  hi: 'हिन्दी',
 }

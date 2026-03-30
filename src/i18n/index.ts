@@ -11,12 +11,6 @@ const catalogs: Record<Lang, Messages> = {
   ru,
   en,
   zh,
-  be: ru, // fallback to Russian
-  tt: ru,
-  ba: ru,
-  ce: ru,
-  sah: ru,
-  hi: en, // fallback to English
 }
 
 export function t(lang: Lang, key: string): string {
