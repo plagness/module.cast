@@ -64,13 +64,19 @@ export function LocalBusinessSchema() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: 'module.cast',
-    description: 'Подкаст-студия в Москве. Запись подкастов, прямые эфиры, видеосъёмка.',
+    name: 'Модуль Каст / module.cast',
+    description: 'Студия в Москве. Запись видео, прямые эфиры.',
     url: BASE,
     address: {
       '@type': 'PostalAddress',
+      streetAddress: 'Можайское шоссе 13',
       addressLocality: 'Москва',
       addressCountry: 'RU',
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 55.720307,
+      longitude: 37.434262,
     },
     priceRange: '$$',
   }

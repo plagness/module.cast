@@ -1,15 +1,16 @@
+import { lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useI18n } from '../i18n'
-import { Mic, Radio, Video, Camera, ArrowRight, Headphones, Zap, MapPin } from 'lucide-react'
+import { Video, Radio, ArrowRight, Headphones, Zap, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import ScrollReveal from '../components/ScrollReveal'
 import SEOHead, { LocalBusinessSchema } from '../components/SEOHead'
 
+const StudioMap = lazy(() => import('../components/StudioMap'))
+
 const serviceCards = [
-  { icon: Mic, key: 'podcast', price: '5 000' },
-  { icon: Radio, key: 'stream', price: '8 000' },
-  { icon: Video, key: 'video', price: '7 000' },
-  { icon: Camera, key: 'photo', price: '4 000' },
+  { icon: Video, key: 'video', price: '5 000' },
+  { icon: Radio, key: 'stream', price: '7 000' },
 ]
 
 const features = [
@@ -32,7 +33,7 @@ export default function Home() {
         <div className="text-center max-w-3xl">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight mb-6">
-              <span style={{ color: 'var(--accent)' }}>module</span>.cast
+              <span style={{ color: 'var(--accent)' }}>{t('brand.accent')}</span>{t('brand.rest')}
             </h1>
             <p className="text-xl md:text-2xl mb-8" style={{ color: 'var(--secondary)' }}>{t('home.title')}</p>
             <p className="text-lg mb-10 max-w-xl mx-auto" style={{ color: 'var(--muted)' }}>{t('home.subtitle')}</p>
@@ -41,33 +42,32 @@ export default function Home() {
             <Link to={`/${lang}/booking`} className="btn-primary no-underline inline-flex items-center gap-2">
               {t('home.book')} <ArrowRight size={18} />
             </Link>
-            <Link to={`/${lang}/price`} className="no-underline px-7 py-3 rounded-xl font-semibold border transition-colors hover:bg-[var(--surface-hover)]" style={{ borderColor: 'var(--border)', color: 'var(--text)' }}>
-              {t('home.calc')}
-            </Link>
           </motion.div>
         </div>
       </section>
 
       {/* Services */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
+      <section className="max-w-4xl mx-auto px-6 py-16">
         <ScrollReveal>
           <h2 className="section-title text-center">{t('home.services')}</h2>
           <p className="section-subtitle text-center mx-auto mb-12">{t('home.services.sub')}</p>
         </ScrollReveal>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
           {serviceCards.map((s, i) => (
             <ScrollReveal key={s.key} delay={i * 0.1}>
-              <div className="glass-card p-6 h-full flex flex-col">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'var(--accent-light)' }}>
-                  <s.icon size={24} style={{ color: 'var(--accent)' }} />
+              <Link to={`/${lang}/booking`} className="no-underline">
+                <div className="glass-card p-8 h-full flex flex-col items-center text-center hover:scale-[1.02] transition-transform">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5" style={{ background: 'var(--accent-light)' }}>
+                    <s.icon size={32} style={{ color: 'var(--accent)' }} />
+                  </div>
+                  <h3 className="font-semibold text-xl mb-2" style={{ color: 'var(--text)' }}>{t(`service.${s.key}`)}</h3>
+                  <p className="text-sm mb-4" style={{ color: 'var(--secondary)' }}>{t(`service.${s.key}.desc`)}</p>
+                  <p className="font-bold text-2xl" style={{ color: 'var(--text)' }}>
+                    {t('home.from')} {s.price} &#8381;
+                    <span className="text-sm font-normal" style={{ color: 'var(--muted)' }}> / {t('home.hour')}</span>
+                  </p>
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{t(`service.${s.key}`)}</h3>
-                <p className="text-sm mb-4 flex-1" style={{ color: 'var(--secondary)' }}>{t(`service.${s.key}.desc`)}</p>
-                <p className="font-bold text-lg">
-                  {t('home.from')} {s.price} &#8381;
-                  <span className="text-sm font-normal" style={{ color: 'var(--muted)' }}> / {t('home.hour')}</span>
-                </p>
-              </div>
+              </Link>
             </ScrollReveal>
           ))}
         </div>
@@ -89,6 +89,17 @@ export default function Home() {
             </ScrollReveal>
           ))}
         </div>
+      </section>
+
+      {/* Map */}
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <ScrollReveal>
+          <h2 className="section-title text-center">{t('home.location')}</h2>
+          <p className="section-subtitle text-center mx-auto mb-10">{t('home.location.sub')}</p>
+        </ScrollReveal>
+        <Suspense fallback={<div className="h-[420px] rounded-2xl" style={{ background: 'var(--card)' }} />}>
+          <StudioMap />
+        </Suspense>
       </section>
 
       {/* CTA */}

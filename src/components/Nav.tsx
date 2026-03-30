@@ -7,9 +7,8 @@ import LangSwitcher from './LangSwitcher'
 
 const navItems = [
   { path: '', key: 'nav.home' },
-  { path: 'price', key: 'nav.price' },
+  { path: 'booking', key: 'nav.booking' },
   { path: 'gallery', key: 'nav.gallery' },
-  { path: 'booking', key: 'nav.contact' },
 ]
 
 export default function Nav() {
@@ -22,7 +21,7 @@ export default function Nav() {
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4">
       <nav className="glass-nav px-6 py-3 flex items-center gap-6 max-w-3xl w-full">
         <Link to={`/${lang}/`} className="font-bold text-lg tracking-tight no-underline" style={{ color: 'var(--accent)' }}>
-          module.cast
+          {t('brand')}
         </Link>
 
         <div className="hidden md:flex items-center gap-1 flex-1">
