@@ -17,7 +17,7 @@ interface Station {
 }
 
 const STATIONS: Station[] = [
-  { name: 'Рабочий Посёлок', coords: [55.7145, 37.4735], color: '#EF7E24', type: 'mcd', lines: 'D1' },
+  { name: 'Рабочий Посёлок', coords: [55.7270, 37.4179], color: '#EF7E24', type: 'mcd', lines: 'D1' },
   { name: 'Сетунь', coords: [55.7178, 37.4520], color: '#EF7E24', type: 'mcd', lines: 'D1' },
   { name: 'Кунцевская', coords: [55.7306, 37.4461], color: '#0072BA', type: 'metro', lines: '3, 4, БКЛ' },
   { name: 'Молодёжная', coords: [55.7408, 37.4167], color: '#0072BA', type: 'metro', lines: '3' },
