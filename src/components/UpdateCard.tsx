@@ -80,12 +80,15 @@ export default function UpdateCard({ entry }: { entry: UpdateEntry }) {
       {/* Tags */}
       {entry.tags && entry.tags.length > 0 && (
         <div className="flex gap-1.5 flex-wrap mb-3">
-          {entry.tags.map(tag => (
-            <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
-              style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
-              {tag}
-            </span>
-          ))}
+          {entry.tags.map(tag => {
+            const translated = t(`tag.${tag}`)
+            return (
+              <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                {translated !== `tag.${tag}` ? translated : tag}
+              </span>
+            )
+          })}
         </div>
       )}
 

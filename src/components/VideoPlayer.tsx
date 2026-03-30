@@ -26,24 +26,40 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
   const [started, setStarted] = useState(false)
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(null)
 
-  const togglePlay = useCallback(() => {
+  const doPlay = useCallback(() => {
     const v = videoRef.current
     if (!v) return
-    if (v.paused) {
-      v.play()
+    v.play().then(() => {
       setPlaying(true)
       setStarted(true)
-    } else {
-      v.pause()
-      setPlaying(false)
-    }
+    }).catch(() => {
+      // autoplay blocked — try muted
+      v.muted = true
+      setMuted(true)
+      v.play().then(() => {
+        setPlaying(true)
+        setStarted(true)
+      }).catch(() => {})
+    })
   }, [])
+
+  const doPause = useCallback(() => {
+    const v = videoRef.current
+    if (!v) return
+    v.pause()
+    setPlaying(false)
+  }, [])
+
+  const togglePlay = useCallback(() => {
+    if (playing) doPause()
+    else doPlay()
+  }, [playing, doPlay, doPause])
 
   const seek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const v = videoRef.current
     if (!v || !duration) return
     const rect = e.currentTarget.getBoundingClientRect()
-    const pct = (e.clientX - rect.left) / rect.width
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
     v.currentTime = pct * duration
   }, [duration])
 
@@ -54,31 +70,38 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
       document.exitFullscreen()
       setIsFullscreen(false)
     } else {
-      el.requestFullscreen()
+      el.requestFullscreen().catch(() => {})
       setIsFullscreen(true)
     }
   }, [])
 
   const handleShare = useCallback(async () => {
     if (!shareUrl) return
-    if (navigator.share) {
-      await navigator.share({ url: shareUrl })
-    } else {
-      await navigator.clipboard.writeText(shareUrl)
-    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ url: shareUrl })
+      } else {
+        await navigator.clipboard.writeText(shareUrl)
+      }
+    } catch {}
   }, [shareUrl])
 
-  // Update subtitle tracks
+  // Subtitle tracks
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
-    for (let i = 0; i < v.textTracks.length; i++) {
-      const track = v.textTracks[i]
-      track.mode = subsEnabled && track.language === subsLang ? 'showing' : 'hidden'
+    const apply = () => {
+      for (let i = 0; i < v.textTracks.length; i++) {
+        const track = v.textTracks[i]
+        track.mode = subsEnabled && track.language === subsLang ? 'showing' : 'hidden'
+      }
     }
+    apply()
+    v.textTracks.addEventListener('change', apply)
+    return () => v.textTracks.removeEventListener('change', apply)
   }, [subsEnabled, subsLang])
 
-  // Time update
+  // Video events
   useEffect(() => {
     const v = videoRef.current
     if (!v) return
@@ -88,13 +111,19 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
     }
     const onMeta = () => setDuration(v.duration)
     const onEnd = () => { setPlaying(false); setStarted(false) }
+    const onPlay = () => { setPlaying(true); setStarted(true) }
+    const onPause = () => setPlaying(false)
     v.addEventListener('timeupdate', onTime)
     v.addEventListener('loadedmetadata', onMeta)
     v.addEventListener('ended', onEnd)
+    v.addEventListener('play', onPlay)
+    v.addEventListener('pause', onPause)
     return () => {
       v.removeEventListener('timeupdate', onTime)
       v.removeEventListener('loadedmetadata', onMeta)
       v.removeEventListener('ended', onEnd)
+      v.removeEventListener('play', onPlay)
+      v.removeEventListener('pause', onPause)
     }
   }, [])
 
@@ -118,13 +147,9 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
   return (
     <div
       ref={containerRef}
-      className={`relative ${aspectClass} bg-black rounded-xl overflow-hidden group cursor-pointer`}
+      className={`relative ${aspectClass} bg-black rounded-xl overflow-hidden group`}
       onMouseMove={showControlsTemporary}
       onMouseEnter={() => setShowControls(true)}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest('[data-controls]')) return
-        togglePlay()
-      }}
     >
       <video
         ref={videoRef}
@@ -133,8 +158,9 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
         playsInline
         preload="metadata"
         muted={muted}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-contain cursor-pointer"
         crossOrigin="anonymous"
+        onClick={togglePlay}
       >
         {subtitles && Object.entries(subtitles).map(([lang, url]) => (
           <track
@@ -148,69 +174,64 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
         ))}
       </video>
 
-      {/* Big play button (before first play) */}
+      {/* Big play button overlay */}
       {!started && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+          onClick={doPlay}
+        >
           <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-            <Play size={28} fill="var(--accent)" style={{ color: 'var(--accent)', marginLeft: 3 }} />
+            <Play size={28} fill="#F97316" style={{ color: '#F97316', marginLeft: 3 }} />
           </div>
         </div>
       )}
 
-      {/* Controls overlay */}
+      {/* Controls overlay (after first play) */}
       {started && (
         <div
-          data-controls
-          className={`absolute inset-x-0 bottom-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
-          style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.7))' }}
+          className={`absolute inset-x-0 bottom-0 transition-opacity duration-300 ${showControls || !playing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))' }}
         >
           {/* Progress bar */}
-          <div className="px-3 pt-4 pb-1 cursor-pointer" onClick={seek}>
-            <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: '#F97316' }} />
+          <div className="px-3 pt-6 pb-1 cursor-pointer" onClick={seek}>
+            <div className="h-1.5 bg-white/20 rounded-full overflow-hidden hover:h-2 transition-all">
+              <div className="h-full rounded-full" style={{ width: `${progress}%`, background: '#F97316' }} />
             </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="flex items-center gap-2 px-3 pb-2.5">
+          <div className="flex items-center gap-1.5 px-3 pb-2.5">
             <button onClick={togglePlay} className="text-white/90 hover:text-white p-1 cursor-pointer">
               {playing ? <Pause size={18} /> : <Play size={18} />}
             </button>
 
-            <span className="text-white/70 text-xs font-mono min-w-[70px]">
+            <span className="text-white/70 text-[11px] font-mono min-w-[65px]">
               {fmt(currentTime)} / {fmt(duration)}
             </span>
 
             <div className="flex-1" />
 
-            {/* Mute */}
             <button onClick={() => setMuted(!muted)} className="text-white/70 hover:text-white p-1 cursor-pointer">
-              {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
             </button>
 
-            {/* Subtitles */}
             {subtitles && Object.keys(subtitles).length > 0 && (
               <div className="relative">
                 <button
                   onClick={() => setShowSubsMenu(!showSubsMenu)}
                   className={`p-1 cursor-pointer ${subsEnabled ? 'text-[#F97316]' : 'text-white/70 hover:text-white'}`}
                 >
-                  <Subtitles size={16} />
+                  <Subtitles size={15} />
                 </button>
                 {showSubsMenu && (
-                  <div className="absolute bottom-full right-0 mb-2 rounded-lg py-1.5 min-w-[120px] shadow-xl" style={{ background: 'rgba(0,0,0,0.9)' }}>
-                    <button
-                      onClick={() => { setSubsEnabled(false); setShowSubsMenu(false) }}
-                      className={`w-full text-left px-3 py-1.5 text-xs cursor-pointer hover:bg-white/10 ${!subsEnabled ? 'text-[#F97316]' : 'text-white/70'}`}
-                    >
+                  <div className="absolute bottom-full right-0 mb-2 rounded-lg py-1.5 min-w-[110px] shadow-xl" style={{ background: 'rgba(0,0,0,0.92)' }}>
+                    <button onClick={() => { setSubsEnabled(false); setShowSubsMenu(false) }}
+                      className={`w-full text-left px-3 py-1.5 text-xs cursor-pointer hover:bg-white/10 ${!subsEnabled ? 'text-[#F97316]' : 'text-white/70'}`}>
                       Выкл
                     </button>
-                    {Object.entries(subtitles).map(([lang]) => (
-                      <button
-                        key={lang}
-                        onClick={() => { setSubsLang(lang); setSubsEnabled(true); setShowSubsMenu(false) }}
-                        className={`w-full text-left px-3 py-1.5 text-xs cursor-pointer hover:bg-white/10 ${subsEnabled && subsLang === lang ? 'text-[#F97316]' : 'text-white/70'}`}
-                      >
+                    {Object.keys(subtitles).map(lang => (
+                      <button key={lang} onClick={() => { setSubsLang(lang); setSubsEnabled(true); setShowSubsMenu(false) }}
+                        className={`w-full text-left px-3 py-1.5 text-xs cursor-pointer hover:bg-white/10 ${subsEnabled && subsLang === lang ? 'text-[#F97316]' : 'text-white/70'}`}>
                         {lang === 'ru' ? 'Русский' : lang === 'en' ? 'English' : lang === 'zh' ? '中文' : lang}
                       </button>
                     ))}
@@ -219,21 +240,18 @@ export default function VideoPlayer({ src, poster, subtitles, activeLang = 'ru',
               </div>
             )}
 
-            {/* Audio tracks (placeholder) */}
             <button className="text-white/30 p-1 cursor-not-allowed" title="Audio tracks (coming soon)">
-              <Languages size={16} />
+              <Languages size={15} />
             </button>
 
-            {/* Share */}
             {shareUrl && (
               <button onClick={handleShare} className="text-white/70 hover:text-white p-1 cursor-pointer">
-                <Share2 size={16} />
+                <Share2 size={15} />
               </button>
             )}
 
-            {/* Fullscreen */}
             <button onClick={toggleFullscreen} className="text-white/70 hover:text-white p-1 cursor-pointer">
-              {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+              {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
             </button>
           </div>
         </div>

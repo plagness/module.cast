@@ -74,9 +74,40 @@
   "gallery.soon": "Photos coming soon",
   "gallery.soon.sub": "We are preparing the studio gallery for you",
 
+  "tag.студия": "studio",
+  "tag.обзор": "overview",
+  "tag.эфиры": "live streams",
+  "tag.подкасты": "podcasts",
+  "tag.оборудование": "equipment",
+  "tag.свет": "lighting",
+  "tag.суфлёр": "teleprompter",
+  "tag.уроки": "lessons",
+  "tag.съёмка": "filming",
+  "tag.расстановка": "layout",
+  "tag.подкаст": "podcast",
+  "tag.интервью": "interview",
+
   "nav.updates": "Updates",
   "updates.title": "Updates",
   "updates.subtitle": "Studio news and latest events",
   "updates.meta": "module.cast studio updates — news, videos, events",
-  "updates.soon": "Updates coming soon"
+  "updates.soon": "Updates coming soon",
+
+  "updates.2026-03-23.title": "Major studio upgrade",
+  "updates.2026-03-23.desc": "Fully redesigned setup for live streams, lessons, and video blogging. Up to 4 cameras, professional teleprompter, modular furniture. Lounge area with Brazilian Santos coffee.",
+
+  "updates.2026-02-21.title": "Everything upgraded",
+  "updates.2026-02-21.desc": "Recording now goes directly to PC. Added a powerful RGB light that fills the entire room. Shoot on armchairs, stands, or standing — the format adapts to you.",
+
+  "updates.2026-02-14.title": "New teleprompter & 4K monitor",
+  "updates.2026-02-14.desc": "Professional teleprompter for reading scripts on camera. 4K monitor for live preview and presentations. Cable management done. White backdrop, podcast table, or no table — modular studio.",
+
+  "updates.2025-12-05.title": "Lesson recording — new format",
+  "updates.2025-12-05.desc": "Most popular format this month — educational lesson recording. Speaker + laptop with presentation. Added Aputure 150C for pink background lighting, main Kino Flo gives an even image.",
+
+  "updates.2025-10-12.title": "Horizontal setup",
+  "updates.2025-10-12.desc": "First time in two years — horizontal podcast setup. Feels fresh. New wide-angle lens captures the full loft-style scene. A great option if you want something different.",
+
+  "updates.2025-07-30.title": "New format — interviews",
+  "updates.2025-07-30.desc": "Moved away from the podcast format. Added a second boom stand — two chairs facing each other. Three cameras: one per guest + wide shot. Perfect for interviews and conversations."
 }
