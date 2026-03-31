@@ -18,7 +18,7 @@ export interface UpdateEntry {
   highlights?: Highlight[]
 }
 
-const S3 = 'https://modulecast-images.s3.twcstorage.ru/updates'
+const S3 = 'https://modulecast-hot.s3.twcstorage.ru/updates'
 
 function subs(date: string) {
   return { ru: `${S3}/${date}.ru.vtt`, en: `${S3}/${date}.en.vtt`, zh: `${S3}/${date}.zh.vtt` }

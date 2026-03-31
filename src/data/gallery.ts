@@ -8,7 +8,7 @@ export interface GalleryPhoto {
   orientation: 'landscape' | 'portrait'
 }
 
-const S3 = 'https://modulecast-images.s3.twcstorage.ru/gallery'
+const S3 = 'https://modulecast-hot.s3.twcstorage.ru/gallery'
 
 export const photos: GalleryPhoto[] = [
   // --- Портреты, тёмный фон, студийный свет ---
