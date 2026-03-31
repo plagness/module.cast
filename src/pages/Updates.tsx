@@ -24,7 +24,7 @@ export default function Updates() {
   }, [location.hash])
 
   return (
-    <section className="max-w-4xl mx-auto px-6 pt-28 pb-16">
+    <section className="max-w-6xl mx-auto px-6 pt-28 pb-16">
       <SEOHead title={t('updates.title')} description={t('updates.meta')} />
 
       <ScrollReveal>
@@ -37,7 +37,7 @@ export default function Updates() {
           <p className="text-lg mb-2">{t('updates.soon')}</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-16">
           {sorted.map((entry, i) => (
             <ScrollReveal key={entry.id} delay={Math.min(i * 0.05, 0.3)}>
               <UpdateCard entry={entry} />

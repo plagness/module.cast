@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n'
 import { Share2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 import type { UpdateEntry } from '../data/updates'
 import VideoPlayer from './VideoPlayer'
 
@@ -20,18 +21,17 @@ export default function UpdateCard({ entry }: { entry: UpdateEntry }) {
   const desc = t(`updates.${entry.id}.desc`)
   const hasTitle = title !== `updates.${entry.id}.title`
   const hasDesc = desc !== `updates.${entry.id}.desc`
-  const isPortrait = entry.orientation === 'portrait'
   const shareUrl = `${window.location.origin}/${lang}/updates#${entry.id}`
+  const isPortrait = entry.orientation === 'portrait'
 
   const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({ url: shareUrl })
-    } else {
-      await navigator.clipboard.writeText(shareUrl)
-    }
+    try {
+      if (navigator.share) await navigator.share({ url: shareUrl })
+      else await navigator.clipboard.writeText(shareUrl)
+    } catch {}
   }
 
-  // Media section
+  // Media
   const media = (() => {
     if (entry.type === 'video' && entry.mediaUrl) {
       return (
@@ -49,12 +49,7 @@ export default function UpdateCard({ entry }: { entry: UpdateEntry }) {
       const ytId = extractYouTubeId(entry.mediaUrl)
       return ytId ? (
         <div className="aspect-video rounded-xl overflow-hidden">
-          <iframe
-            src={`https://www.youtube.com/embed/${ytId}`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          <iframe src={`https://www.youtube.com/embed/${ytId}`} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
         </div>
       ) : null
     }
@@ -64,22 +59,26 @@ export default function UpdateCard({ entry }: { entry: UpdateEntry }) {
     return null
   })()
 
-  // Text content
+  // Floating text sidebar
   const textContent = (
-    <div className={isPortrait ? 'flex flex-col justify-center' : ''}>
-      {/* Date + Share */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <time className="text-xs font-medium" style={{ color: 'var(--muted)' }}>
-          {formatDate(entry.date, lang)}
-        </time>
-        <button onClick={handleShare} className="p-1.5 rounded-full hover:bg-[var(--surface-hover)] transition-colors cursor-pointer" title="Share">
-          <Share2 size={14} style={{ color: 'var(--muted)' }} />
-        </button>
-      </div>
+    <>
+      {/* Date */}
+      <motion.time
+        initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.1 }}
+        className="text-xs font-medium block mb-2"
+        style={{ color: 'var(--muted)' }}
+      >
+        {formatDate(entry.date, lang)}
+      </motion.time>
 
       {/* Tags */}
       {entry.tags && entry.tags.length > 0 && (
-        <div className="flex gap-1.5 flex-wrap mb-3">
+        <motion.div
+          initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.15 }}
+          className="flex gap-1.5 flex-wrap mb-3"
+        >
           {entry.tags.map(tag => {
             const translated = t(`tag.${tag}`)
             return (
@@ -89,62 +88,94 @@ export default function UpdateCard({ entry }: { entry: UpdateEntry }) {
               </span>
             )
           })}
-        </div>
+        </motion.div>
       )}
 
       {/* Title */}
       {hasTitle && (
-        <h3 className="font-semibold text-lg mb-2 leading-snug">{title}</h3>
+        <motion.h3
+          initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.2 }}
+          className="font-bold text-xl leading-tight mb-2"
+        >
+          {title}
+        </motion.h3>
       )}
 
       {/* Description */}
       {hasDesc && (
-        <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--secondary)' }}>
+        <motion.p
+          initial={{ opacity: 0, x: 16 }} whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.25 }}
+          className="text-sm leading-relaxed"
+          style={{ color: 'var(--secondary)' }}
+        >
           {desc}
-        </p>
+        </motion.p>
+      )}
+
+      {/* Accent line */}
+      {(entry.highlights?.length || 0) > 0 && (
+        <div className="w-8 h-0.5 rounded-full my-4" style={{ background: 'var(--accent)', opacity: 0.4 }} />
       )}
 
       {/* Highlights */}
       {entry.highlights && entry.highlights.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
-          {entry.highlights.map((h, i) => {
-            const hText = t(`updates.${entry.id}.h.${i}`)
-            return (
-              <span key={i} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium"
-                style={{ background: 'var(--surface-hover)', color: 'var(--text)' }}>
-                <span>{h.icon}</span>
-                <span>{hText !== `updates.${entry.id}.h.${i}` ? hText : h.text}</span>
-              </span>
-            )
-          })}
+        <div className="flex flex-wrap gap-2">
+          {entry.highlights.map((h, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0, scale: 0.85 }} whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }} transition={{ duration: 0.3, delay: 0.3 + i * 0.05 }}
+              className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+              style={{ background: 'var(--surface-hover)', color: 'var(--secondary)' }}
+            >
+              <span>{h.icon}</span>
+              <span>{h.text}</span>
+            </motion.span>
+          ))}
         </div>
       )}
-    </div>
+
+      {/* Share */}
+      <motion.button
+        initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+        viewport={{ once: true }} transition={{ duration: 0.3, delay: 0.4 }}
+        onClick={handleShare}
+        className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer hover:text-[var(--accent)]"
+        style={{ color: 'var(--muted)' }}
+      >
+        <Share2 size={12} />
+        {lang === 'ru' ? 'Поделиться' : lang === 'zh' ? '分享' : 'Share'}
+      </motion.button>
+    </>
   )
 
-  // Layout depends on orientation
+  // Portrait: video + floating sidebar
   if (isPortrait && media) {
     return (
-      <article id={entry.id} className="glass-card overflow-hidden">
-        <div className="flex flex-col md:flex-row">
-          {/* Video left (40%) */}
-          <div className="md:w-[40%] flex-shrink-0">
+      <article id={entry.id} className="flex flex-col md:flex-row md:items-start md:justify-center gap-5 md:gap-10">
+        <div className="w-full md:w-[340px] lg:w-[380px] flex-shrink-0">
+          <div className="glass-card overflow-hidden">
             {media}
           </div>
-          {/* Text right (60%) */}
-          <div className="p-5 md:p-6 md:w-[60%]">
-            {textContent}
-          </div>
+        </div>
+        <div className="md:w-[300px] lg:w-[340px] flex-shrink-0 md:pt-2 md:border-l-2 md:pl-6" style={{ borderColor: 'var(--border)' }}>
+          {textContent}
         </div>
       </article>
     )
   }
 
-  // Landscape or non-video: media on top, text below
+  // Landscape / non-video: media on top, text below
   return (
-    <article id={entry.id} className="glass-card overflow-hidden">
-      {media && <div className="p-3 pb-0">{media}</div>}
-      <div className="p-5">
+    <article id={entry.id} className="max-w-2xl mx-auto">
+      {media && (
+        <div className="glass-card overflow-hidden">
+          {media}
+        </div>
+      )}
+      <div className="pt-4 px-1">
         {textContent}
       </div>
     </article>
