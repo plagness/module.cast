@@ -8,6 +8,13 @@ import SEOHead, { LocalBusinessSchema } from '../components/SEOHead'
 
 const StudioMap = lazy(() => import('../components/StudioMap'))
 
+const S3 = 'https://modulecast-hot.s3.twcstorage.ru/team'
+
+const team = [
+  { name: 'Данил Седнев', nameEn: 'Danil Sednev', nameZh: '丹尼尔·塞德涅夫', role: 'Основатель', roleEn: 'Founder', roleZh: '创始人', photo: `${S3}/danil.webp` },
+  { name: 'Валерий Теневой', nameEn: 'Valery Tenevoy', nameZh: '瓦列里·捷涅沃伊', role: 'Оператор', roleEn: 'Camera operator', roleZh: '摄影师', photo: `${S3}/valery.webp` },
+]
+
 const serviceCards = [
   { icon: Video, key: 'video', price: '5 000' },
   { icon: Radio, key: 'stream', price: '7 000' },
@@ -100,6 +107,27 @@ export default function Home() {
         <Suspense fallback={<div className="h-[420px] rounded-2xl" style={{ background: 'var(--card)' }} />}>
           <StudioMap />
         </Suspense>
+      </section>
+
+      {/* Team */}
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <ScrollReveal>
+          <h2 className="section-title text-center">{t('home.team')}</h2>
+          <p className="section-subtitle text-center mx-auto mb-12">{t('home.team.sub')}</p>
+        </ScrollReveal>
+        <div className="flex flex-wrap justify-center gap-10">
+          {team.map((m, i) => (
+            <ScrollReveal key={m.nameEn} delay={i * 0.1}>
+              <div className="flex flex-col items-center text-center w-44">
+                <div className="w-32 h-32 rounded-2xl overflow-hidden mb-4 shadow-lg">
+                  <img src={m.photo} alt={lang === 'ru' ? m.name : m.nameEn} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <h3 className="font-semibold text-base">{lang === 'zh' ? m.nameZh : lang === 'en' ? m.nameEn : m.name}</h3>
+                <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{lang === 'zh' ? m.roleZh : lang === 'en' ? m.roleEn : m.role}</p>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
       </section>
 
       {/* CTA */}
