@@ -11,8 +11,8 @@ const StudioMap = lazy(() => import('../components/StudioMap'))
 const S3 = 'https://modulecast-hot.s3.twcstorage.ru/team'
 
 const team = [
-  { name: 'Данил Седнев', nameEn: 'Danil Sednev', nameZh: '丹尼尔·塞德涅夫', role: 'Основатель', roleEn: 'Founder', roleZh: '创始人', photo: `${S3}/danil.webp` },
-  { name: 'Валерий Теневой', nameEn: 'Valery Tenevoy', nameZh: '瓦列里·捷涅沃伊', role: 'Оператор', roleEn: 'Camera operator', roleZh: '摄影师', photo: `${S3}/valery.webp` },
+  { name: 'Данил Седнев', nameEn: 'Danil Sednev', nameZh: '丹尼尔·塞德涅夫', role: 'Основатель', roleEn: 'Founder', roleZh: '创始人', photo: `${S3}/danil.webp`, url: 'https://svoypodcast.ru' },
+  { name: 'Валерий Теневой', nameEn: 'Valery Tenevoy', nameZh: '瓦列里·捷涅沃伊', role: 'Основатель', roleEn: 'Founder', roleZh: '创始人', photo: `${S3}/valery.webp`, url: 'https://plag.space' },
 ]
 
 const serviceCards = [
@@ -118,13 +118,13 @@ export default function Home() {
         <div className="flex flex-wrap justify-center gap-10">
           {team.map((m, i) => (
             <ScrollReveal key={m.nameEn} delay={i * 0.1}>
-              <div className="flex flex-col items-center text-center w-44">
-                <div className="w-32 h-32 rounded-2xl overflow-hidden mb-4 shadow-lg">
+              <a href={m.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center text-center w-44 no-underline group">
+                <div className="w-32 h-32 rounded-2xl overflow-hidden mb-4 shadow-lg group-hover:scale-105 transition-transform">
                   <img src={m.photo} alt={lang === 'ru' ? m.name : m.nameEn} className="w-full h-full object-cover" loading="lazy" />
                 </div>
-                <h3 className="font-semibold text-base">{lang === 'zh' ? m.nameZh : lang === 'en' ? m.nameEn : m.name}</h3>
+                <h3 className="font-semibold text-base" style={{ color: 'var(--text)' }}>{lang === 'zh' ? m.nameZh : lang === 'en' ? m.nameEn : m.name}</h3>
                 <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>{lang === 'zh' ? m.roleZh : lang === 'en' ? m.roleEn : m.role}</p>
-              </div>
+              </a>
             </ScrollReveal>
           ))}
         </div>
