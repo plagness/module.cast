@@ -71,6 +71,12 @@
   "gallery.subtitle": "Our studio and equipment",
   "gallery.meta": "Photos of module.cast studio in Moscow",
   "gallery.all": "All",
+  "gallery.cat.all": "All",
+  "gallery.cat.podcast": "Podcasts",
+  "gallery.cat.interview": "Interviews",
+  "gallery.cat.portrait": "Portraits",
+  "gallery.cat.studio": "Studio",
+  "gallery.cat.lessons": "Lessons",
   "gallery.soon": "Photos coming soon",
   "gallery.soon.sub": "We are preparing the studio gallery for you",
 

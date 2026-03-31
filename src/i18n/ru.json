@@ -71,6 +71,12 @@
   "gallery.subtitle": "Наша студия и оборудование",
   "gallery.meta": "Фотографии студии Модуль Каст в Москве",
   "gallery.all": "Все",
+  "gallery.cat.all": "Все",
+  "gallery.cat.podcast": "Подкасты",
+  "gallery.cat.interview": "Интервью",
+  "gallery.cat.portrait": "Портреты",
+  "gallery.cat.studio": "Студия",
+  "gallery.cat.lessons": "Уроки",
   "gallery.soon": "Фотографии скоро появятся",
   "gallery.soon.sub": "Мы готовим для вас галерею студии",
 

@@ -1,10 +1,15 @@
 import { useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
-import type { GalleryPhoto } from '../data/gallery'
+
+interface LightboxPhoto {
+  id: string
+  src: string
+  alt: string
+}
 
 interface Props {
-  photos: GalleryPhoto[]
+  photos: LightboxPhoto[]
   index: number
   onClose: () => void
   onChange: (idx: number) => void

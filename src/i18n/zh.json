@@ -71,6 +71,12 @@
   "gallery.subtitle": "我们的工作室和设备",
   "gallery.meta": "莫斯科module.cast工作室照片",
   "gallery.all": "全部",
+  "gallery.cat.all": "全部",
+  "gallery.cat.podcast": "播客",
+  "gallery.cat.interview": "访谈",
+  "gallery.cat.portrait": "肖像",
+  "gallery.cat.studio": "工作室",
+  "gallery.cat.lessons": "课程",
   "gallery.soon": "照片即将上线",
   "gallery.soon.sub": "我们正在为您准备工作室画廊",
 
