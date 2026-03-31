@@ -20,19 +20,11 @@ export const photos: GalleryPhoto[] = [
     tags: ['портрет', 'тёмный фон', 'шторы', 'студийный свет', 'backlight', 'растение', 'гость', 'широкий план'] },
   { id: 'DSC00020', src: `${S3}/DSC00020.webp`, category: 'portrait', orientation: 'landscape',
     tags: ['портрет', 'тёмный фон', 'шторы', 'студийный свет', 'backlight', 'растение', 'гость'] },
-  { id: 'DSC09991', src: `${S3}/DSC09991.webp`, category: 'portrait', orientation: 'landscape',
-    tags: ['портрет', 'тёмный фон', 'шторы', 'студийный свет', 'backlight', 'гость'] },
 
-  // --- Крупные планы с микрофоном, кирпичная стена, лофт ---
-  { id: 'DSC00062', src: `${S3}/DSC00062.webp`, category: 'portrait', orientation: 'landscape',
-    tags: ['портрет', 'крупный план', 'тёмный фон', 'шторы', 'тёплый свет', 'гость'] },
-  { id: 'DSC00068', src: `${S3}/DSC00068.webp`, category: 'portrait', orientation: 'landscape',
-    tags: ['портрет', 'крупный план', 'микрофон', 'тёмный фон', 'шторы', 'гость'] },
+  // --- Крупный план, кирпичная стена, лофт ---
   { id: 'DSC00074', src: `${S3}/DSC00074.webp`, category: 'portrait', orientation: 'landscape',
     tags: ['портрет', 'крупный план', 'тёмный фон', 'шторы', 'тёплый свет', 'гость'] },
   { id: 'DSC00084', src: `${S3}/DSC00084.webp`, category: 'interview', orientation: 'landscape',
-    tags: ['интервью', 'кресло', 'микрофон', 'журавль', 'растение', 'кирпичная стена', 'лофт', 'гость'] },
-  { id: 'DSC00092', src: `${S3}/DSC00092.webp`, category: 'interview', orientation: 'landscape',
     tags: ['интервью', 'кресло', 'микрофон', 'журавль', 'растение', 'кирпичная стена', 'лофт', 'гость'] },
   { id: 'DSC00104', src: `${S3}/DSC00104.webp`, category: 'interview', orientation: 'landscape',
     tags: ['интервью', 'кресло', 'микрофон', 'журавль', 'растение', 'кирпичная стена', 'лофт', 'крупный план', 'гость'] },
@@ -55,24 +47,16 @@ export const photos: GalleryPhoto[] = [
   { id: 'DSC00167', src: `${S3}/DSC00167.webp`, category: 'studio', orientation: 'landscape',
     tags: ['оборудование', 'стол', 'камеры', 'микрофоны', 'микшер', 'свет', 'журавль', 'шторы', 'растение'] },
 
-  // --- Подкаст запись за столом (пара) ---
+  // --- Подкаст запись за столом ---
   { id: 'DSC04167', src: `${S3}/DSC04167.webp`, category: 'podcast', orientation: 'portrait',
     tags: ['подкаст', 'запись', 'стол', 'микрофоны', 'Kino Flo', 'три человека', 'шторы', 'камера'] },
-  { id: 'DSC04178', src: `${S3}/DSC04178.webp`, category: 'podcast', orientation: 'portrait',
-    tags: ['подкаст', 'запись', 'крупный план', 'пара', 'микрофоны', 'Kino Flo', 'улыбка', 'шторы'] },
   { id: 'DSC04180', src: `${S3}/DSC04180.webp`, category: 'podcast', orientation: 'portrait',
     tags: ['подкаст', 'запись', 'крупный план', 'пара', 'микрофоны', 'Kino Flo', 'шторы'] },
 
-  // --- Гостья за столом с ноутбуком, чай (подкаст/уроки) ---
-  { id: 'DSC09604', src: `${S3}/DSC09604.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ноутбук', 'микрофон', 'журавль', 'чай', 'растение', 'шторы', 'гость', 'стол'] },
+  // --- Гостья за столом с ноутбуком, чай ---
   { id: 'DSC09608', src: `${S3}/DSC09608.webp`, category: 'podcast', orientation: 'landscape',
     tags: ['подкаст', 'ноутбук', 'микрофон', 'журавль', 'чай', 'растение', 'шторы', 'гость', 'стол'] },
   { id: 'DSC09611', src: `${S3}/DSC09611.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ноутбук', 'микрофон', 'журавль', 'чай', 'растение', 'шторы', 'гость'] },
-  { id: 'DSC09621', src: `${S3}/DSC09621.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ноутбук', 'микрофон', 'журавль', 'чай', 'растение', 'шторы', 'гость'] },
-  { id: 'DSC09628', src: `${S3}/DSC09628.webp`, category: 'podcast', orientation: 'landscape',
     tags: ['подкаст', 'ноутбук', 'микрофон', 'журавль', 'чай', 'растение', 'шторы', 'гость'] },
   { id: 'DSC09634', src: `${S3}/DSC09634.webp`, category: 'portrait', orientation: 'portrait',
     tags: ['портрет', 'микрофон', 'ноутбук', 'растение', 'шторы', 'крупный план', 'гость', 'улыбка'] },
@@ -86,32 +70,14 @@ export const photos: GalleryPhoto[] = [
   // --- Ведущий за столом с MacBook ---
   { id: 'DSC09662', src: `${S3}/DSC09662.webp`, category: 'podcast', orientation: 'landscape',
     tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'журавль', 'чай', 'полки', 'растения', 'шторы', 'стол'] },
-  { id: 'DSC09663', src: `${S3}/DSC09663.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'журавль', 'чай', 'полки', 'растения', 'шторы'] },
-  { id: 'DSC09666', src: `${S3}/DSC09666.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'журавль', 'чай', 'полки', 'растения', 'жесты'] },
-  { id: 'DSC09671', src: `${S3}/DSC09671.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'журавль', 'чай', 'полки', 'растения'] },
-  { id: 'DSC09676', src: `${S3}/DSC09676.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'журавль', 'чай', 'полки', 'растения'] },
-
-  // --- Ведущий за столом, широкий план ---
-  { id: 'DSC09682', src: `${S3}/DSC09682.webp`, category: 'podcast', orientation: 'landscape',
-    tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'широкий план', 'стол', 'растение', 'шторы', 'звукоизоляция'] },
   { id: 'DSC09683', src: `${S3}/DSC09683.webp`, category: 'podcast', orientation: 'landscape',
     tags: ['подкаст', 'ведущий', 'MacBook', 'микрофон', 'стол', 'полки', 'шторы'] },
 
   // --- Интервью: гостья + ведущий в креслах ---
   { id: 'DSC09686', src: `${S3}/DSC09686.webp`, category: 'interview', orientation: 'landscape',
     tags: ['интервью', 'кресло', 'микрофон', 'журавль', 'растение', 'кирпичная стена', 'лофт', 'гость', 'улыбка'] },
-  { id: 'DSC09700', src: `${S3}/DSC09700.webp`, category: 'interview', orientation: 'landscape',
-    tags: ['интервью', 'кресло', 'микрофон', 'ведущий', 'шторы', 'звукоизоляция', 'лофт'] },
-  { id: 'DSC09704', src: `${S3}/DSC09704.webp`, category: 'interview', orientation: 'landscape',
-    tags: ['интервью', 'кресло', 'микрофон', 'ведущий', 'улыбка', 'шторы', 'звукоизоляция'] },
   { id: 'DSC09707', src: `${S3}/DSC09707.webp`, category: 'interview', orientation: 'landscape',
     tags: ['интервью', 'кресло', 'микрофон', 'ведущий', 'шторы', 'звукоизоляция'] },
-  { id: 'DSC09710', src: `${S3}/DSC09710.webp`, category: 'interview', orientation: 'landscape',
-    tags: ['интервью', 'кресло', 'микрофон', 'ведущий', 'шторы', 'свет', 'звукоизоляция'] },
   { id: 'DSC09721', src: `${S3}/DSC09721.webp`, category: 'interview', orientation: 'landscape',
     tags: ['интервью', 'кресло', 'микрофон', 'гость', 'растение', 'шторы'] },
   { id: 'DSC09726', src: `${S3}/DSC09726.webp`, category: 'interview', orientation: 'landscape',
@@ -137,23 +103,7 @@ export const photos: GalleryPhoto[] = [
   { id: 'DSC09862', src: `${S3}/DSC09862.webp`, category: 'portrait', orientation: 'landscape',
     tags: ['портрет', 'микрофон', 'растение', 'шторы', 'гость', 'улыбка', 'свет'] },
 
-  // --- Белый фон, портрет с микрофоном ---
-  { id: 'DSC09865', src: `${S3}/DSC09865.webp`, category: 'lessons', orientation: 'landscape',
-    tags: ['уроки', 'белый фон', 'микрофон', 'журавль', 'крупный план', 'гость'] },
-  { id: 'DSC09875', src: `${S3}/DSC09875.webp`, category: 'lessons', orientation: 'landscape',
-    tags: ['уроки', 'белый фон', 'микрофон', 'журавль', 'стол', 'гость'] },
-
-  // --- Белый фон, MacBook, уроки ---
-  { id: 'DSC09929', src: `${S3}/DSC09929.webp`, category: 'lessons', orientation: 'landscape',
-    tags: ['уроки', 'белый фон', 'MacBook', 'ноутбук', 'микрофон', 'журавль', 'стол', 'гость'] },
-  { id: 'DSC09937', src: `${S3}/DSC09937.webp`, category: 'lessons', orientation: 'landscape',
-    tags: ['уроки', 'белый фон', 'MacBook', 'ноутбук', 'микрофон', 'стол', 'ведущий'] },
-  { id: 'DSC09942', src: `${S3}/DSC09942.webp`, category: 'lessons', orientation: 'landscape',
-    tags: ['уроки', 'белый фон', 'MacBook', 'ноутбук', 'микрофон', 'стол', 'ведущий'] },
-
   // --- Белый фон, крупный план ---
-  { id: 'DSC09947', src: `${S3}/DSC09947.webp`, category: 'lessons', orientation: 'landscape',
-    tags: ['уроки', 'белый фон', 'микрофон', 'крупный план', 'гость'] },
   { id: 'DSC09949', src: `${S3}/DSC09949.webp`, category: 'lessons', orientation: 'portrait',
     tags: ['уроки', 'белый фон', 'микрофон', 'крупный план', 'портрет', 'гость'] },
 
