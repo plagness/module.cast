@@ -1,17 +1,20 @@
 import { useState, useMemo } from 'react'
 import { useI18n } from '../i18n'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Video, Radio, ArrowRight, Minus, Plus, Send, Check, AlertCircle } from 'lucide-react'
+import { Video, Camera, Radio, PackageCheck, ArrowRight, Minus, Plus, Send, Check, AlertCircle } from 'lucide-react'
 import { services, addons } from '../data/services'
 import { sendBooking } from '../utils/telegram'
 import SEOHead from '../components/SEOHead'
 import ScrollReveal from '../components/ScrollReveal'
 
-const iconMap = { Video, Radio }
+const iconMap = { Video, Camera, Radio, PackageCheck }
+
+const hourlyServices = services.filter(s => s.type === 'hourly')
+const packageServices = services.filter(s => s.type === 'package')
 
 export default function Booking() {
   const { t } = useI18n()
-  const [selectedService, setSelectedService] = useState<string>('video')
+  const [selectedService, setSelectedService] = useState<string>('studio')
   const [date, setDate] = useState('')
   const [hours, setHours] = useState(2)
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set())
@@ -19,12 +22,14 @@ export default function Booking() {
   const [cooldown, setCooldown] = useState(false)
 
   const service = services.find(s => s.id === selectedService)!
-  const category = service.category
+  const isPackage = service.type === 'package'
+  const minH = service.minHours ?? 1
 
-  const availableAddons = useMemo(
-    () => addons.filter(a => a.categories.includes(category)),
-    [category]
-  )
+  const selectService = (s: typeof service) => {
+    setSelectedService(s.id)
+    setSelectedAddons(new Set())
+    if (s.minHours && hours < s.minHours) setHours(s.minHours)
+  }
 
   const toggleAddon = (id: string) => {
     setSelectedAddons(prev => {
@@ -36,13 +41,14 @@ export default function Booking() {
   }
 
   const total = useMemo(() => {
+    if (isPackage) return service.basePrice
     let sum = service.basePrice * hours
-    for (const a of availableAddons) {
+    for (const a of addons) {
       if (!selectedAddons.has(a.id)) continue
       sum += a.unit === 'hour' ? a.price * hours : a.price
     }
     return sum
-  }, [service, hours, selectedAddons, availableAddons])
+  }, [service, hours, selectedAddons, isPackage])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -51,12 +57,16 @@ export default function Booking() {
 
     const form = new FormData(e.currentTarget)
     const addonNames = [...selectedAddons].map(id => t(`addon.${id}`)).join(', ')
+    const servicesStr = isPackage
+      ? t(`service.${selectedService}`)
+      : `${t(`service.${selectedService}`)} (${hours}${t('booking.h')})${addonNames ? ` + ${addonNames}` : ''}`
+
     const ok = await sendBooking({
       name: form.get('name') as string,
       phone: form.get('phone') as string,
       telegram: form.get('telegram') as string,
       date,
-      services: `${t(`service.${selectedService}`)} (${hours}${t('booking.h')})${addonNames ? ` + ${addonNames}` : ''}`,
+      services: servicesStr,
       total: total.toLocaleString(),
       message: form.get('message') as string,
     })
@@ -80,22 +90,67 @@ export default function Booking() {
       {/* Step 1: Service */}
       <div className="mb-8">
         <h3 className="font-semibold mb-4" style={{ color: 'var(--secondary)' }}>{t('booking.step.service')}</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {services.map(s => {
+
+        {/* Hourly services */}
+        <div className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: 'var(--muted)' }}>
+          {t('booking.section.hourly')}
+        </div>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {hourlyServices.map(s => {
             const Icon = iconMap[s.icon as keyof typeof iconMap]
             const active = s.id === selectedService
             return (
               <button
                 key={s.id}
-                onClick={() => { setSelectedService(s.id); setSelectedAddons(new Set()) }}
-                className={`glass-card p-6 text-center cursor-pointer transition-all ${active ? 'ring-2' : ''}`}
+                onClick={() => selectService(s)}
+                className={`glass-card p-5 text-center cursor-pointer transition-all ${active ? 'ring-2' : ''}`}
                 style={active ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 2px var(--accent)' } : {}}
               >
-                <Icon size={32} className="mx-auto mb-3" style={{ color: active ? 'var(--accent)' : 'var(--secondary)' }} />
-                <div className="font-semibold mb-1">{t(`service.${s.id}`)}</div>
-                <div className="text-sm" style={{ color: 'var(--muted)' }}>
+                <Icon size={28} className="mx-auto mb-2" style={{ color: active ? 'var(--accent)' : 'var(--secondary)' }} />
+                <div className="font-semibold text-sm mb-1">{t(`service.${s.id}`)}</div>
+                <div className="text-xs" style={{ color: 'var(--muted)' }}>
                   {s.basePrice.toLocaleString()} &#8381;/{t('booking.per.hour')}
                 </div>
+                {s.minHours && (
+                  <div className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+                    {t('booking.min.hours').replace('{n}', String(s.minHours))}
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Packages */}
+        <div className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: 'var(--muted)' }}>
+          {t('booking.section.packages')}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {packageServices.map(s => {
+            const Icon = iconMap[s.icon as keyof typeof iconMap]
+            const active = s.id === selectedService
+            return (
+              <button
+                key={s.id}
+                onClick={() => selectService(s)}
+                className={`glass-card p-5 text-left cursor-pointer transition-all ${active ? 'ring-2' : ''}`}
+                style={active ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 2px var(--accent)' } : {}}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <Icon size={24} style={{ color: active ? 'var(--accent)' : 'var(--secondary)' }} />
+                  <div className="font-semibold text-sm">{t(`service.${s.id}`)}</div>
+                </div>
+                <div className="font-bold text-lg mb-2" style={{ color: 'var(--accent)' }}>
+                  {s.basePrice.toLocaleString()} &#8381;
+                </div>
+                {s.includes && (
+                  <div className="text-xs space-y-0.5" style={{ color: 'var(--muted)' }}>
+                    <div className="font-medium" style={{ color: 'var(--secondary)' }}>{t('booking.package.includes')}</div>
+                    {s.includes.map(key => (
+                      <div key={key}>· {t(key)}</div>
+                    ))}
+                  </div>
+                )}
               </button>
             )
           })}
@@ -115,46 +170,50 @@ export default function Booking() {
         />
       </div>
 
-      {/* Step 3: Duration */}
-      <div className="mb-8">
-        <h3 className="font-semibold mb-4" style={{ color: 'var(--secondary)' }}>{t('booking.step.duration')}</h3>
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-medium">{t('booking.step.duration')}</span>
-            <span className="font-bold text-lg">{hours} {t('booking.h')}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setHours(h => Math.max(1, h - 1))} className="p-2 rounded-lg border cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ borderColor: 'var(--border)' }}>
-              <Minus size={18} />
-            </button>
-            <input type="range" min={1} max={12} value={hours} onChange={e => setHours(Number(e.target.value))} className="flex-1 accent-[var(--accent)]" />
-            <button onClick={() => setHours(h => Math.min(12, h + 1))} className="p-2 rounded-lg border cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ borderColor: 'var(--border)' }}>
-              <Plus size={18} />
-            </button>
+      {/* Step 3: Duration (hourly only) */}
+      {!isPackage && (
+        <div className="mb-8">
+          <h3 className="font-semibold mb-4" style={{ color: 'var(--secondary)' }}>{t('booking.step.duration')}</h3>
+          <div className="glass-card p-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-medium">{t('booking.step.duration')}</span>
+              <span className="font-bold text-lg">{hours} {t('booking.h')}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <button onClick={() => setHours(h => Math.max(minH, h - 1))} className="p-2 rounded-lg border cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ borderColor: 'var(--border)' }}>
+                <Minus size={18} />
+              </button>
+              <input type="range" min={minH} max={12} value={hours} onChange={e => setHours(Number(e.target.value))} className="flex-1 accent-[var(--accent)]" />
+              <button onClick={() => setHours(h => Math.min(12, h + 1))} className="p-2 rounded-lg border cursor-pointer hover:bg-[var(--surface-hover)] transition-colors" style={{ borderColor: 'var(--border)' }}>
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Step 4: Addons */}
-      <div className="mb-8">
-        <h3 className="font-semibold mb-4" style={{ color: 'var(--secondary)' }}>{t('booking.step.addons')}</h3>
-        <div className="glass-card p-6">
-          <AnimatePresence mode="popLayout">
-            {availableAddons.map(a => (
-              <motion.label key={a.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center justify-between py-3 border-b last:border-b-0 cursor-pointer" style={{ borderColor: 'var(--border)' }}>
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" checked={selectedAddons.has(a.id)} onChange={() => toggleAddon(a.id)} className="w-5 h-5 accent-[var(--accent)] cursor-pointer" />
-                  <span className="text-sm">{t(`addon.${a.id}`)}</span>
-                </div>
-                <span className="text-sm font-medium" style={{ color: 'var(--secondary)' }}>
-                  +{a.price.toLocaleString()} &#8381;{a.unit === 'hour' ? `/${t('booking.per.hour')}` : ''}
-                </span>
-              </motion.label>
-            ))}
-          </AnimatePresence>
+      {/* Step 4: Addons (hourly only) */}
+      {!isPackage && (
+        <div className="mb-8">
+          <h3 className="font-semibold mb-4" style={{ color: 'var(--secondary)' }}>{t('booking.step.addons')}</h3>
+          <div className="glass-card p-6">
+            <AnimatePresence mode="popLayout">
+              {addons.map(a => (
+                <motion.label key={a.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="flex items-center justify-between py-3 border-b last:border-b-0 cursor-pointer" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={selectedAddons.has(a.id)} onChange={() => toggleAddon(a.id)} className="w-5 h-5 accent-[var(--accent)] cursor-pointer" />
+                    <span className="text-sm">{t(`addon.${a.id}`)}</span>
+                  </div>
+                  <span className="text-sm font-medium" style={{ color: 'var(--secondary)' }}>
+                    +{a.price.toLocaleString()} &#8381;{a.unit === 'hour' ? `/${t('booking.per.hour')}` : ''}
+                  </span>
+                </motion.label>
+              ))}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Step 5: Total */}
       <div className="glass-card p-6 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">

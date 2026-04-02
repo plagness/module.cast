@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useI18n } from '../i18n'
-import { Video, Radio, ArrowRight, Headphones, Zap, MapPin } from 'lucide-react'
+import { Video, Camera, Radio, ArrowRight, Headphones, Zap, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import ScrollReveal from '../components/ScrollReveal'
 import SEOHead, { LocalBusinessSchema } from '../components/SEOHead'
@@ -16,7 +16,8 @@ const team = [
 ]
 
 const serviceCards = [
-  { icon: Video, key: 'video', price: '5 000' },
+  { icon: Video, key: 'studio', price: '5 000' },
+  { icon: Camera, key: 'studio-own', price: '3 000' },
   { icon: Radio, key: 'stream', price: '7 000' },
 ]
 
@@ -59,7 +60,7 @@ export default function Home() {
           <h2 className="section-title text-center">{t('home.services')}</h2>
           <p className="section-subtitle text-center mx-auto mb-12">{t('home.services.sub')}</p>
         </ScrollReveal>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
           {serviceCards.map((s, i) => (
             <ScrollReveal key={s.key} delay={i * 0.1}>
               <Link to={`/${lang}/booking`} className="no-underline">
